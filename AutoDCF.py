@@ -90,8 +90,9 @@ def get_model(num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
     MLP_layers.build((layers[0],))
     vector = MLP_layers(vector)
     # Final prediction layer
-    prediction = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction')(vector)
-
+    predict_layer = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction')
+    predict_layer.build((layers[-1],))
+    prediction = predict_layer(vector)
     model = Model(input=[user_input, item_input],
                   output=[user_decoder_MLP,item_decoder_MLP,prediction])
 
