@@ -80,7 +80,8 @@ def get_model(num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
 
     # The 0-th layer is the dot product of embedding layers
     # vector = K.dot(user_encoder_MLP, item_encoder_MLP)
-    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='dot')
+    # vector = merge([user_encoder_MLP, item_encoder_MLP], mode='dot')
+    vector = T.dot(user_encoder_MLP,item_encoder_MLP)
     # MLP layers
 
     MLP_layers = Sequential()
