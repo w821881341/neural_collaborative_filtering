@@ -173,14 +173,16 @@ if __name__ == '__main__':
 
     # Build model
     model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
+
+    cost_lambda = lambda y_true,y_pred: y_pred
     if learner.lower() == "adagrad":
-        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
+        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy',cost_lambda,cost_lambda], loss_weights=[0.5, 0.25, 0.25])
     elif learner.lower() == "rmsprop":
-        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
+        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy',cost_lambda,cost_lambda], loss_weights=[0.5, 0.25, 0.25])
     elif learner.lower() == "adam":
-        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
+        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy',cost_lambda,cost_lambda], loss_weights=[0.5, 0.25, 0.25])
     else:
-        model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
+        model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy',cost_lambda,cost_lambda], loss_weights=[0.5, 0.25, 0.25])
 
         # Check Init performance
     t1 = time()
@@ -196,9 +198,10 @@ if __name__ == '__main__':
         user_input, item_input, labels = get_train_instances(train, num_negatives)
         user_input_array = np.array(user_input)
         item_input_array = np.array(item_input)
+        label_array = np.array(labels)
         # Training
         hist = model.fit([user_input_array, item_input_array],  # input
-                         [np.array(labels),0],  # labels
+                         [label_array,np.zeros_like(label_array)],  # labels
                          batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
         t2 = time()
 
