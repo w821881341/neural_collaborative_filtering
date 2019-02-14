@@ -110,10 +110,11 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     MLP_layers.add(Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],)))
     MLP_layers.build((layers[0],))
     predict_result = MLP_layers(vector)
+    user_cost = K.mean(K.square(user_data - user_decoder_MLP), axis=-1)
+    item_cost = K.mean(K.square(item_data - item_decoder_MLP), axis=-1)
 
-
-    user_cost = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), 1, keepdims=True), output_shape=(1,),name='user_reconstruct_cost')([user_data, user_decoder_MLP])
-    item_cost = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), 1, keepdims=True), output_shape=(1,),name='item_reconstruct_cost')([item_data, item_decoder_MLP])
+    # user_cost = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), 1, keepdims=True), output_shape=(1,),name='user_reconstruct_cost')([user_data, user_decoder_MLP])
+    # item_cost = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), 1, keepdims=True), output_shape=(1,),name='item_reconstruct_cost')([item_data, item_decoder_MLP])
     # cost_layer.build((2,))
     # user_cost = cost_layer([user_input, user_decoder_MLP])
     # item_cost = cost_layer([item_input, item_decoder_MLP])
@@ -173,13 +174,13 @@ if __name__ == '__main__':
     # Build model
     model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
     if learner.lower() == "adagrad":
-        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['mse', 'mse', 'binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
+        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
     elif learner.lower() == "rmsprop":
-        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['mse', 'mse', 'binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
+        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
     elif learner.lower() == "adam":
-        model.compile(optimizer=Adam(lr=learning_rate), loss=['mse', 'mse', 'binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
+        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
     else:
-        model.compile(optimizer=SGD(lr=learning_rate), loss=['mse', 'mse', 'binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
+        model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
 
         # Check Init performance
     t1 = time()
