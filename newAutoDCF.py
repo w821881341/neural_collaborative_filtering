@@ -110,8 +110,8 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     MLP_layers.add(Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],)))
     MLP_layers.build((layers[0],))
     predict_result = MLP_layers(vector)
-    user_cost = T.mean(K.square(user_data - user_decoder_MLP), axis=-1)
-    item_cost = T.mean(K.square(item_data - item_decoder_MLP), axis=-1)
+    user_cost = K.sum(K.square(user_data - user_decoder_MLP), axis=-1)
+    item_cost = K.sum(K.square(item_data - item_decoder_MLP), axis=-1)
 
     # user_cost = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), 1, keepdims=True), output_shape=(1,),name='user_reconstruct_cost')([user_data, user_decoder_MLP])
     # item_cost = Lambda(lambda x: K.sum(K.square(x[0] - x[1]), 1, keepdims=True), output_shape=(1,),name='item_reconstruct_cost')([item_data, item_decoder_MLP])
