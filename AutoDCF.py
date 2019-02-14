@@ -84,6 +84,7 @@ def get_model(num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
     # MLP layers
 
     MLP_layers = Sequential()
+    MLP_layers.build((layers[0],))
     for idx in range(1, num_layer):
         MLP_layers.add(Dense(layers[idx],input_shape=(layers[idx-1],),W_regularizer=l2(reg_layers[idx]), activation='relu', name='layer%d' % idx))
 
