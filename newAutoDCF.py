@@ -100,7 +100,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
 
     # The 0-th layer is the dot product of embedding layers
     # vector = K.dot(user_encoder_MLP, item_encoder_MLP)
-    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='concat')
+    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul')
     # vector = T.dot(user_encoder_MLP,item_encoder_MLP)
     # MLP layers
     MLP_layers = Sequential()
