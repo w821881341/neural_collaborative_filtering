@@ -82,10 +82,12 @@ def get_model(num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
     vector = K.dot(user_encoder_MLP, item_encoder_MLP)
 
     # MLP layers
-    for idx in range(1, num_layer):
-        layer = Dense(layers[idx], W_regularizer=l2(reg_layers[idx]), activation='relu', name='layer%d' % idx)
-        vector = layer(vector)
 
+    MLP_layers = Sequential()
+    for idx in range(1, num_layer):
+        MLP_layers.add(Dense(layers[idx],input_shape=(layers[idx-1],),W_regularizer=l2(reg_layers[idx]), activation='relu', name='layer%d' % idx))
+
+    vector = MLP_layers(vector)
     # Final prediction layer
     prediction = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction')(vector)
 
@@ -99,9 +101,11 @@ def get_train_instances(train, num_negatives):
     user_input, item_input, labels = [], [], []
     num_users = train.shape[0]
     train_matrix = np.array(train.toarray())
+    train_matrix_t = train_matrix.transpose()
+
     for (u, i) in train.keys():
         user_data = train_matrix[u, :]
-        item_data = train_matrix[:, i]
+        item_data = train_matrix_t[i, :]
         # positive instance
         user_input.append(user_data)
         item_input.append(item_data)
@@ -112,7 +116,7 @@ def get_train_instances(train, num_negatives):
             while (u, j) in train:
                 j = np.random.randint(num_items)
             user_input.append(user_data)
-            item_input.append(train_matrix[:, j])
+            item_input.append(train_matrix_t[j, :])
             labels.append(0)
     return user_input, item_input, labels
 
