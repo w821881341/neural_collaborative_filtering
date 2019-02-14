@@ -67,7 +67,7 @@ def eval_one_rating(idx):
     items_data = _train_matrix_t[items, :]
     # Get prediction scores
     map_item_score = {}
-    users_data = np.full(len(items), user_data, dtype = 'int32')
+    users_data = np.full((len(items),len(user_data)), user_data, dtype = 'int32')
     predictions = _model.predict([users_data, items_data],
                                  batch_size=100, verbose=0)
     for i in range(len(items)):
