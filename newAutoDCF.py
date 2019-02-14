@@ -70,12 +70,12 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     # train_matrix_t = K.transpose(train_matrix)
     train_matrix_t = train_matrix.transpose()
 
-    user_data = K.squeeze(Embedding(num_users, num_items,
+    user_data = Flatten()(Embedding(num_users, num_items,
             weights=[train_matrix], input_length=1,
-            name='embedding_user', trainable=False)(user_input),1)
-    item_data = K.squeeze(Embedding(num_items, num_users,
+            name='embedding_user', trainable=False)(user_input))
+    item_data = Flatten()(Embedding(num_items, num_users,
             weights=[train_matrix_t], input_length=1,
-            name='embedding_item', trainable=False)(item_input),1)
+            name='embedding_item', trainable=False)(item_input))
 
     user_encoder = Sequential()
     user_encoder.add(Dense(layers[0] , input_shape=(num_items,), activation='relu'))
@@ -93,12 +93,10 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     item_decoder.add(Dense(num_users , input_shape=(layers[0],), activation='relu'))
     item_decoder.build((layers[0],))
 
-
     user_encoder_MLP = user_encoder(user_data)
     user_decoder_MLP = user_decoder(user_encoder_MLP)
     item_encoder_MLP = item_encoder(item_data)
     item_decoder_MLP = item_decoder(user_encoder_MLP)
-
 
     # The 0-th layer is the dot product of embedding layers
     # vector = K.dot(user_encoder_MLP, item_encoder_MLP)
@@ -112,11 +110,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     MLP_layers.add(Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],)))
     MLP_layers.build((layers[0],))
     predict_result = MLP_layers(vector)
-    # Final prediction layer
-    # predict_layer = Sequential()
-    # predict_layer.add(Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],)))
-    # predict_layer.build((layers[-1],))
-    # predict_result = predict_layer(vector)
+
 
     cost_layer = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='user_reconstruct_cost')
     cost_layer.build((2,))
