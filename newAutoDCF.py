@@ -102,7 +102,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
 
     # The 0-th layer is the dot product of embedding layers
     # vector = K.dot(user_encoder_MLP, item_encoder_MLP)
-    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul')
+    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='concat')
     # vector = T.dot(user_encoder_MLP,item_encoder_MLP)
     # MLP layers
     MLP_layers = Sequential()
@@ -117,8 +117,8 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     predict_layer.build((layers[-1],))
     prediction = predict_layer(vector)
 
-    cost_layer = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), input_shape=(num_items,), name='user_reconstruct_cost')
-    cost_layer.build((num_items,))
+    cost_layer = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='user_reconstruct_cost')
+    cost_layer.build((2,))
     user_cost = cost_layer([user_input, user_decoder_MLP])
     item_cost = cost_layer([item_input, item_decoder_MLP])
 
