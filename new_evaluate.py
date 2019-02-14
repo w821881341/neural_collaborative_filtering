@@ -72,7 +72,7 @@ def eval_one_rating(idx):
                                  batch_size=100, verbose=0)
     for i in range(len(items)):
         item = items[i]
-        map_item_score[item] = predictions[i]
+        map_item_score[item] = predictions[i][2]
     items.pop()
     
     # Evaluate top rank list
