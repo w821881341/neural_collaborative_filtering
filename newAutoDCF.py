@@ -115,7 +115,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     predict_layer = Sequential()
     predict_layer.add(Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],)))
     predict_layer.build((layers[-1],))
-    prediction = predict_layer(vector)
+    predict_result = predict_layer(vector)
 
     cost_layer = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='user_reconstruct_cost')
     cost_layer.build((2,))
@@ -123,7 +123,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     item_cost = cost_layer([item_input, item_decoder_MLP])
 
     model = Model(input=[user_input, item_input],
-                  output=[prediction, user_cost, item_cost])
+                  output=[predict_result, user_cost, item_cost])
 
     return model
 
