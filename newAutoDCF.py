@@ -117,10 +117,10 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     predict_layer.build((layers[-1],))
     prediction = predict_layer(vector)
 
-    user_cost = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='user_reconstruct_cost')(
-        [user_input, user_decoder_MLP])
-    item_cost = Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='item_reconstruct_cost')(
-        [item_input, item_decoder_MLP])
+    cost_layer = Sequential()
+    cost_layer.add(Lambda(lambda x: K.sum(K.square(x[0] - x[1][:, 0]), 1, keepdims=True), name='user_reconstruct_cost'))
+    user_cost = cost_layer([user_input, user_decoder_MLP])
+    item_cost = cost_layer([item_input, item_decoder_MLP])
 
     model = Model(input=[user_input, item_input],
                   output=[prediction, user_cost, item_cost])
