@@ -77,16 +77,20 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
             weights=[train_matrix_t], input_length=1,
             name='embedding_item', trainable=False)(item_input),1)
 
-    user_encoder = Dense(layers[0] , input_shape=(num_items,), activation='relu')
+    user_encoder = Sequential()
+    user_encoder.add(Dense(layers[0] , input_shape=(num_items,), activation='relu'))
     user_encoder.build((num_items,))
 
-    user_decoder = Dense(num_items , input_shape=(layers[0],), activation='relu')
+    user_decoder = Sequential()
+    user_decoder.add(Dense(num_items , input_shape=(layers[0],), activation='relu'))
     user_decoder.build((layers[0],))
 
-    item_encoder = Dense(layers[0], input_shape=(num_users,), activation='relu')
+    item_encoder = Sequential()
+    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu'))
     item_encoder.build((num_users,))
 
-    item_decoder = Dense(num_users , input_shape=(layers[0],), activation='relu')
+    item_decoder = Sequential()
+    item_decoder.add(Dense(num_users , input_shape=(layers[0],), activation='relu'))
     item_decoder.build((layers[0],))
 
 
