@@ -63,20 +63,23 @@ def get_model(num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
     assert len(layers) == len(reg_layers)
     num_layer = len(layers)  # Number of layers in the MLP
     # Input variables
-    user_input = Input(shape=(1,), dtype='int32', name='user_input')
-    item_input = Input(shape=(1,), dtype='int32', name='item_input')
 
-    MLP_Embedding_User = Embedding(input_dim=num_users, output_dim=layers[0] // 2, name='user_embedding',
-                                   init=init_normal, W_regularizer=l2(reg_layers[0]), input_length=1)
-    MLP_Embedding_Item = Embedding(input_dim=num_items, output_dim=layers[0] // 2, name='item_embedding',
-                                   init=init_normal, W_regularizer=l2(reg_layers[0]), input_length=1)
+    user_input = Input(shape=(num_items,), dtype='float32', name='user_input')
+    item_input = Input(shape=(num_users,), dtype='float32', name='item_input')
 
-    # Crucial to flatten an embedding vector!
-    user_latent = Flatten()(MLP_Embedding_User(user_input))
-    item_latent = Flatten()(MLP_Embedding_Item(item_input))
+    user_encoder = Dense(layers[0] , input_shape=(num_items,), activation='relu')
+    user_decoder = Dense(num_items , input_shape=(layers[0],), activation='relu')
+    item_encoder = Dense(layers[0], input_shape=(num_users,), activation='relu')
+    item_decoder = Dense(num_users , input_shape=(layers[0],), activation='relu')
 
-    # The 0-th layer is the concatenation of embedding layers
-    vector = merge([user_latent, item_latent], mode='concat')
+    user_encoder_MLP = user_encoder(user_input)
+    user_decoder_MLP = user_decoder(user_encoder_MLP)
+    item_encoder_MLP = item_encoder(user_input)
+    item_decoder_MLP = item_decoder(user_encoder_MLP)
+
+
+    # The 0-th layer is the dot product of embedding layers
+    vector = K.dot(user_encoder_MLP, item_encoder_MLP)
 
     # MLP layers
     for idx in range(1, num_layer):
@@ -87,7 +90,7 @@ def get_model(num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
     prediction = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction')(vector)
 
     model = Model(input=[user_input, item_input],
-                  output=prediction)
+                  output=[user_decoder_MLP,item_decoder_MLP,prediction])
 
     return model
 
@@ -95,18 +98,21 @@ def get_model(num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
 def get_train_instances(train, num_negatives):
     user_input, item_input, labels = [], [], []
     num_users = train.shape[0]
+    train_matrix = np.array(train.toarray())
     for (u, i) in train.keys():
+        user_data = train_matrix[u, :]
+        item_data = train_matrix[:, i]
         # positive instance
-        user_input.append(u)
-        item_input.append(i)
+        user_input.append(user_data)
+        item_input.append(item_data)
         labels.append(1)
         # negative instances
         for t in range(num_negatives):
             j = np.random.randint(num_items)
-            while train.has_key((u, j)):
+            while (u, j) in train:
                 j = np.random.randint(num_items)
-            user_input.append(u)
-            item_input.append(j)
+            user_input.append(user_data)
+            item_input.append(train_matrix[:, j])
             labels.append(0)
     return user_input, item_input, labels
 
@@ -140,13 +146,13 @@ if __name__ == '__main__':
     # Build model
     model = get_model(num_users, num_items, layers, reg_layers)
     if learner.lower() == "adagrad":
-        model.compile(optimizer=Adagrad(lr=learning_rate), loss='binary_crossentropy')
+        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['mse', 'mse', 'binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
     elif learner.lower() == "rmsprop":
-        model.compile(optimizer=RMSprop(lr=learning_rate), loss='binary_crossentropy')
+        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['mse', 'mse', 'binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
     elif learner.lower() == "adam":
-        model.compile(optimizer=Adam(lr=learning_rate), loss='binary_crossentropy')
+        model.compile(optimizer=Adam(lr=learning_rate), loss=['mse', 'mse', 'binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
     else:
-        model.compile(optimizer=SGD(lr=learning_rate), loss='binary_crossentropy')
+        model.compile(optimizer=SGD(lr=learning_rate), loss=['mse', 'mse', 'binary_crossentropy'], loss_weights=[0.25, 0.25, 0.5])
 
         # Check Init performance
     t1 = time()
@@ -160,10 +166,11 @@ if __name__ == '__main__':
         t1 = time()
         # Generate training instances
         user_input, item_input, labels = get_train_instances(train, num_negatives)
-
+        user_input_array = np.array(user_input)
+        item_input_array = np.array(item_input)
         # Training
-        hist = model.fit([np.array(user_input), np.array(item_input)],  # input
-                         np.array(labels),  # labels
+        hist = model.fit([user_input_array, item_input_array],  # input
+                         [user_input_array, item_input_array, np.array(labels)],  # labels
                          batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
         t2 = time()
 
