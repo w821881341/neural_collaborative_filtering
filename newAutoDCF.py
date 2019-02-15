@@ -81,19 +81,19 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     K.print_tensor(user_data)
     user_encoder = Sequential(name='user_encoder')
     user_encoder.add(Dense(layers[0] , input_shape=(num_items,), activation='relu'))
-    user_encoder.build((num_items,))
+    # user_encoder.build((num_items,))
 
     user_decoder = Sequential(name='user_decoder')
     user_decoder.add(Dense(num_items , input_shape=(layers[0],), activation='relu'))
-    user_decoder.build((layers[0],))
+    # user_decoder.build((layers[0],))
 
     item_encoder = Sequential(name='item_encoder')
     item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu'))
-    item_encoder.build((num_users,))
+    # item_encoder.build((num_users,))
 
     item_decoder = Sequential(name='item_decoder')
     item_decoder.add(Dense(num_users , input_shape=(layers[0],), activation='relu'))
-    item_decoder.build((layers[0],))
+    # item_decoder.build((layers[0],))
 
     user_encoder_MLP = user_encoder(user_data)
     user_decoder_MLP = user_decoder(user_encoder_MLP)
