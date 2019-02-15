@@ -13,6 +13,7 @@ import multiprocessing
 import numpy as np
 from time import time
 #from numba import jit, autojit
+from tqdm import tqdm
 
 # Global variables that are shared across processes
 _model = None
@@ -44,8 +45,7 @@ def evaluate_model(model, testRatings, testNegatives, K, num_thread):
         ndcgs = [r[1] for r in res]
         return (hits, ndcgs)
     # Single thread
-    for idx in range(len(_testRatings)):
-        print(idx)
+    for idx in tqdm(range(len(_testRatings))):
         (hr,ndcg) = eval_one_rating(idx)
         hits.append(hr)
         ndcgs.append(ndcg)      
