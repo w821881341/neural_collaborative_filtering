@@ -114,7 +114,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
 
 
     user_cost = Lambda(lambda x: K.sum(merge([K.square(user_data - user_decoder_MLP), user_data],mode='mul'), 1, keepdims=True)/K.sum(user_data,axis=-1), output_shape=(1,),name='user_reconstruct_cost')([user_data, user_decoder_MLP])
-    item_cost = Lambda(lambda x: K.sum(merge([K.square(user_data - user_decoder_MLP), user_data],mode='mul'), 1, keepdims=True)/K.sum(user_data,axis=-1), output_shape=(1,),name='item_reconstruct_cost')([item_data, item_decoder_MLP])
+    item_cost = Lambda(lambda x: K.sum(merge([K.square(item_data - item_encoder_MLP), user_data],mode='mul'), 1, keepdims=True)/K.sum(item_data,axis=-1), output_shape=(1,),name='item_reconstruct_cost')([item_data, item_decoder_MLP])
 
     model = Model(input=[user_input, item_input],
                   output=[predict_result, user_cost, item_cost])
