@@ -98,7 +98,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     user_encoder_MLP = user_encoder(user_data)
     user_decoder_MLP = user_decoder(user_encoder_MLP)
     item_encoder_MLP = item_encoder(item_data)
-    item_decoder_MLP = item_decoder(user_encoder_MLP)
+    item_decoder_MLP = item_decoder(item_encoder_MLP)
 
     # The 0-th layer is the dot product of embedding layers
     vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul',name="fusion")
