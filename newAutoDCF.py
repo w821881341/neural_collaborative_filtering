@@ -50,6 +50,8 @@ def parse_args():
                         help='Number of negative instances to pair with a positive instance.')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate.')
+    parser.add_argument('--cost_weight', type=float, default=0.25,
+                        help='weight of cost in loss')
     parser.add_argument('--learner', nargs='?', default='adam',
                         help='Specify an optimizer: adagrad, adam, rmsprop, sgd')
     parser.add_argument('--verbose', type=int, default=1,
