@@ -220,9 +220,9 @@ if __name__ == '__main__':
         # Evaluation
         if epoch % verbose == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
-            hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
-            print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]'
-                  % (epoch, t2 - t1, hr, ndcg, loss, time() - t2))
+            hr, ndcg, loss, user_cost, item_cost = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0], hist.history['user_cost'][1], hist.history['user_cost'][2]
+            print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f, user_cost = %.4f, item_cost = %.4f, [%.1f s]'
+                  % (epoch, t2 - t1, hr, ndcg, loss,user_cost, item_cost, time() - t2))
             if hr > best_hr:
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
