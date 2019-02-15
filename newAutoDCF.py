@@ -8,6 +8,9 @@ He Xiangnan et al. Neural Collaborative Filtering. In WWW 2017.
 
 import numpy as np
 
+import os
+os.environ['THEANO_FLAGS'] = "device=cuda,force_device=True,floatX=float32"
+
 import theano
 import theano.tensor as T
 import keras
@@ -160,7 +163,7 @@ if __name__ == '__main__':
     verbose = args.verbose
 
     topK = 10
-    evaluation_threads = 12
+    evaluation_threads = 1
     print("MLP arguments: %s " % (args))
     model_out_file = 'Pretrain/%s_MLP_%s_%d.h5' % (args.dataset, args.layers, time())
 
