@@ -188,7 +188,7 @@ if __name__ == '__main__':
                       loss_weights=[0.5, 0.25, 0.25])
     elif learner.lower() == "adam":
         model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[0.5, 0.25, 0.25])
+                      loss_weights=[1, 0.5, 0.5])
     else:
         model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
                       loss_weights=[0.5, 0.25, 0.25])
