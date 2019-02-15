@@ -25,6 +25,7 @@ from time import time
 import sys
 import argparse
 import multiprocessing as mp
+from keras.utils.visualize_util import plot
 
 #################### Arguments ####################
 def parse_args():
@@ -134,6 +135,8 @@ if __name__ == '__main__':
     
     # Build model
     model = get_model(num_users, num_items, layers, reg_layers)
+    plot(model, to_file='MLP.png')
+
     if learner.lower() == "adagrad": 
         model.compile(optimizer=Adagrad(lr=learning_rate), loss='binary_crossentropy')
     elif learner.lower() == "rmsprop":

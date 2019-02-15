@@ -23,6 +23,7 @@ import multiprocessing as mp
 import sys
 import math
 import argparse
+from keras.utils.visualize_util import plot
 
 #################### Arguments ####################
 def parse_args():
@@ -124,6 +125,8 @@ if __name__ == '__main__':
     
     # Build model
     model = get_model(num_users, num_items, num_factors, regs)
+    plot(model, to_file='GMF.png')
+
     if learner.lower() == "adagrad": 
         model.compile(optimizer=Adagrad(lr=learning_rate), loss='binary_crossentropy')
     elif learner.lower() == "rmsprop":

@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
     # Build model
     model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
-    plot(model, to_file='model.png')
+    plot(model, to_file='AutoDCF.png')
 
     cost_lambda = lambda y_true, y_pred: y_pred
     if learner.lower() == "adagrad":
