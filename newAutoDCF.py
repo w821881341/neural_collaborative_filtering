@@ -79,19 +79,19 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
             name='embedding_item', trainable=False)(item_input))
 
     K.print_tensor(user_data)
-    user_encoder = Sequential()
+    user_encoder = Sequential(name='user_encoder')
     user_encoder.add(Dense(layers[0] , input_shape=(num_items,), activation='relu'))
     user_encoder.build((num_items,))
 
-    user_decoder = Sequential()
+    user_decoder = Sequential(name='user_decoder')
     user_decoder.add(Dense(num_items , input_shape=(layers[0],), activation='relu'))
     user_decoder.build((layers[0],))
 
-    item_encoder = Sequential()
+    item_encoder = Sequential(name='item_encoder')
     item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu'))
     item_encoder.build((num_users,))
 
-    item_decoder = Sequential()
+    item_decoder = Sequential(name='item_decoder')
     item_decoder.add(Dense(num_users , input_shape=(layers[0],), activation='relu'))
     item_decoder.build((layers[0],))
 
@@ -101,9 +101,9 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     item_decoder_MLP = item_decoder(user_encoder_MLP)
 
     # The 0-th layer is the dot product of embedding layers
-    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul')
+    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul',name="fusion")
 
-    MLP_layers = Sequential()
+    MLP_layers = Sequential(name="MLP_layers")
 
     for idx in range(1, num_layer):
         MLP_layers.add(Dense(layers[idx],input_shape=(layers[idx-1],),W_regularizer=l2(reg_layers[idx]), activation='relu', name='layer%d' % idx))
