@@ -25,6 +25,7 @@ from time import time
 import sys
 import argparse
 import multiprocessing as mp
+from keras.utils.visualize_util import plot
 
 
 #################### Arguments ####################
@@ -168,6 +169,7 @@ if __name__ == '__main__':
 
     # Build model
     model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
+    plot(model, to_file='model.png')
 
     cost_lambda = lambda y_true,y_pred: y_pred
     if learner.lower() == "adagrad":
