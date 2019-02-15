@@ -60,39 +60,39 @@ def init_normal(shape, name=None):
     return initializations.normal(shape, scale=0.01, name=name)
 
 
-def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
+def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0, 0]):
     assert len(layers) == len(reg_layers)
     num_layer = len(layers)  # Number of layers in the MLP
     # Input variables
 
-    user_input = Input(shape=(1,), dtype='float32', name = 'user_input')
-    item_input = Input(shape=(1,), dtype='float32', name = 'item_input')
+    user_input = Input(shape=(1,), dtype='float32', name='user_input')
+    item_input = Input(shape=(1,), dtype='float32', name='item_input')
     # train_matrix = Input(shape=(num_users,num_items), dtype='int32', name = 'train_matrix')
     # train_matrix_t = K.transpose(train_matrix)
     train_matrix_t = train_matrix.transpose()
 
     user_data = Flatten()(Embedding(num_users, num_items,
-            weights=[train_matrix], input_length=1,
-            name='embedding_user', trainable=False)(user_input))
+                                    weights=[train_matrix], input_length=1,
+                                    name='embedding_user', trainable=False)(user_input))
     item_data = Flatten()(Embedding(num_items, num_users,
-            weights=[train_matrix_t], input_length=1,
-            name='embedding_item', trainable=False)(item_input))
+                                    weights=[train_matrix_t], input_length=1,
+                                    name='embedding_item', trainable=False)(item_input))
 
     K.print_tensor(user_data)
     user_encoder = Sequential(name='user_encoder')
-    user_encoder.add(Dense(layers[0] , input_shape=(num_items,), activation='relu',name='user_encoder_layer_1'))
+    user_encoder.add(Dense(layers[0], input_shape=(num_items,), activation='relu', name='user_encoder_layer_1'))
     # user_encoder.build((num_items,))
 
     user_decoder = Sequential(name='user_decoder')
-    user_decoder.add(Dense(num_items , input_shape=(layers[0],), activation='relu',name='user_decoder_layer_1'))
+    user_decoder.add(Dense(num_items, input_shape=(layers[0],), activation='relu', name='user_decoder_layer_1'))
     # user_decoder.build((layers[0],))
 
     item_encoder = Sequential(name='item_encoder')
-    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu',name='item_encoder_layer_1'))
+    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu', name='item_encoder_layer_1'))
     # item_encoder.build((num_users,))
 
     item_decoder = Sequential(name='item_decoder')
-    item_decoder.add(Dense(num_users , input_shape=(layers[0],), activation='relu',name='item_decoder_layer_1'))
+    item_decoder.add(Dense(num_users, input_shape=(layers[0],), activation='relu', name='item_decoder_layer_1'))
     # item_decoder.build((layers[0],))
 
     user_encoder_MLP = user_encoder(user_data)
@@ -101,20 +101,25 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     item_decoder_MLP = item_decoder(item_encoder_MLP)
 
     # The 0-th layer is the dot product of embedding layers
-    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul',name="fusion")
+    vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul', name="fusion")
 
     MLP_layers = Sequential(name="MLP_layers")
     for idx in range(1, num_layer):
-        MLP_layers.add(Dense(layers[idx],input_shape=(layers[idx-1],),W_regularizer=l2(reg_layers[idx]), activation='relu', name='layer%d' % idx))
+        MLP_layers.add(
+            Dense(layers[idx], input_shape=(layers[idx - 1],), W_regularizer=l2(reg_layers[idx]), activation='relu',
+                  name='layer%d' % idx))
     vector = MLP_layers(vector)
     # MLP_layers.build((layers[0],))
 
-    predict_layer = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],))
+    predict_layer = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction', input_shape=(layers[-1],))
     predict_result = predict_layer(vector)
 
-
-    user_cost = Lambda(lambda x: K.sum(merge([K.square(user_data - user_decoder_MLP), user_data],mode='mul'), 1, keepdims=True)/K.sum(user_data,axis=-1), output_shape=(1,),name='user_reconstruct_cost')([user_data, user_decoder_MLP])
-    item_cost = Lambda(lambda x: K.sum(merge([K.square(item_data - item_encoder_MLP), user_data],mode='mul'), 1, keepdims=True)/K.sum(item_data,axis=-1), output_shape=(1,),name='item_reconstruct_cost')([item_data, item_decoder_MLP])
+    user_cost = Lambda(
+        lambda x: K.sum(merge([K.square(x[0] - x[1]), x[0]], mode='mul'), 1, keepdims=True) / K.sum(x[0], axis=-1),
+        output_shape=(1,), name='user_reconstruct_cost')([user_data, user_decoder_MLP])
+    item_cost = Lambda(
+        lambda x: K.sum(merge([K.square(x[0] - x[1]), x[0]], mode='mul'), 1, keepdims=True) / K.sum(x[0], axis=-1),
+        output_shape=(1,), name='item_reconstruct_cost')([item_data, item_decoder_MLP])
 
     model = Model(input=[user_input, item_input],
                   output=[predict_result, user_cost, item_cost])
@@ -123,7 +128,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
 
 
 def get_train_instances(train, num_negatives):
-    user_input, item_input, labels = [],[],[]
+    user_input, item_input, labels = [], [], []
     num_users = train.shape[0]
     for (u, i) in train.keys():
         # positive instance
@@ -172,15 +177,19 @@ if __name__ == '__main__':
     model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
     plot(model, to_file='model.png')
 
-    cost_lambda = lambda y_true,y_pred: y_pred
+    cost_lambda = lambda y_true, y_pred: y_pred
     if learner.lower() == "adagrad":
-        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy',cost_lambda,cost_lambda], loss_weights=[0.5, 0.25, 0.25])
+        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
+                      loss_weights=[0.5, 0.25, 0.25])
     elif learner.lower() == "rmsprop":
-        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy',cost_lambda,cost_lambda], loss_weights=[0.5, 0.25, 0.25])
+        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
+                      loss_weights=[0.5, 0.25, 0.25])
     elif learner.lower() == "adam":
-        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy',cost_lambda,cost_lambda], loss_weights=[0.5, 0.25, 0.25])
+        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
+                      loss_weights=[0.5, 0.25, 0.25])
     else:
-        model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy',cost_lambda,cost_lambda], loss_weights=[0.5, 0.25, 0.25])
+        model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
+                      loss_weights=[0.5, 0.25, 0.25])
 
         # Check Init performance
     t1 = time()
@@ -199,7 +208,7 @@ if __name__ == '__main__':
         label_array = np.array(labels)
         # Training
         hist = model.fit([user_input_array, item_input_array],  # input
-                         [label_array,np.zeros_like(label_array),np.zeros_like(label_array)],  # labels
+                         [label_array, np.zeros_like(label_array), np.zeros_like(label_array)],  # labels
                          batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
         t2 = time()
 
