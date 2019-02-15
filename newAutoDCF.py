@@ -160,6 +160,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     epochs = args.epochs
     verbose = args.verbose
+    cost_weight = args.cost_weight
 
     topK = 10
     evaluation_threads = 1
@@ -182,16 +183,16 @@ if __name__ == '__main__':
     cost_lambda = lambda y_true, y_pred: y_pred
     if learner.lower() == "adagrad":
         model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[0.5, 0.25, 0.25])
+                      loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
     elif learner.lower() == "rmsprop":
         model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[0.5, 0.25, 0.25])
+                      loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
     elif learner.lower() == "adam":
         model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[1, 0.5, 0.5])
+                      loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
     else:
         model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[0.5, 0.25, 0.25])
+                      loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
 
         # Check Init performance
     t1 = time()
