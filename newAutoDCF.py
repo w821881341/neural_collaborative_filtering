@@ -117,12 +117,13 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
     predict_layer = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction', input_shape=(layers[-1],))
     predict_result = predict_layer(vector)
 
-    user_cost = Lambda(lambda x: K.sum([K.square(x[0] - x[1])*x[0]], 1, keepdims=True) / K.sum(x[0], 1, keepdims=True),output_shape=(1,), name='user_reconstruct_cost')([user_data, user_decoder_MLP])
+    user_cost = Lambda(
+        lambda x: K.sum(K.square(x[0] - x[1]) * x[0], 1, keepdims=True) / K.sum(x[0], 1, keepdims=True) + K.epsilon(),
+        output_shape=(1,), name='user_reconstruct_cost')([user_data, user_decoder_MLP])
     item_cost = Lambda(
-        lambda x: K.sum(merge([K.square(x[0] - x[1]), x[0]], mode='mul'), 1, keepdims=True) / K.sum(x[0], 1, keepdims=True),
+        lambda x: K.sum(K.square(x[0] - x[1]) * x[0], 1, keepdims=True) / K.sum(x[0], 1, keepdims=True) + K.epsilon(),
         output_shape=(1,), name='item_reconstruct_cost')([item_data, item_decoder_MLP])
-    user_cost.eval()
-
+    user_cost = theano.printing.Print('user_cost')(user_cost)
     model = Model(input=[user_input, item_input],
                   output=[predict_result, user_cost, item_cost])
 
@@ -212,7 +213,8 @@ if __name__ == '__main__':
         label_array = np.array(labels)
         # Training
         hist = model.fit([user_input_array, item_input_array],  # input
-                         [label_array,np.zeros_like(label_array,dtype=float), np.zeros_like(label_array,dtype=float)],  # labels
+                         [label_array, np.zeros_like(label_array, dtype=float),
+                          np.zeros_like(label_array, dtype=float)],  # labels
                          batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
         t2 = time()
 
