@@ -193,12 +193,14 @@ if __name__ == '__main__':
 
         # Check Init performance
     t1 = time()
-    # (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
-    # hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
-    # print('Init: HR = %.4f, NDCG = %.4f [%.1f]' % (hr, ndcg, time() - t1))
+    (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
+    hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
+    # mf_embedding_norm = np.linalg.norm(model.get_layer('user_embedding').get_weights())+np.linalg.norm(model.get_layer('item_embedding').get_weights())
+    # p_norm = np.linalg.norm(model.get_layer('prediction').get_weights()[0])
+    print('Init: HR = %.4f, NDCG = %.4f\t [%.1f s]' % (hr, ndcg, time() - t1))
 
     # Train model
-    best_hr, best_ndcg, best_iter = 0, 0, -1
+    best_hr, best_ndcg, best_iter = hr, ndcg, -1
     for epoch in range(epochs):
         t1 = time()
         # Generate training instances
