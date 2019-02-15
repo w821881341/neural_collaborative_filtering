@@ -121,7 +121,7 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
     item_cost = Lambda(
         lambda x: K.sum(merge([K.square(x[0] - x[1]), x[0]], mode='mul'), 1, keepdims=True) / K.sum(x[0], 1, keepdims=True),
         output_shape=(1,), name='item_reconstruct_cost')([item_data, item_decoder_MLP])
-    user_cost = theano.printing.Print('this is user_cost:')(user_cost)
+    user_cost.eval()
 
     model = Model(input=[user_input, item_input],
                   output=[predict_result, user_cost, item_cost])
