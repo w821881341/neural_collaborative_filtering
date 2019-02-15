@@ -184,13 +184,13 @@ if __name__ == '__main__':
     cost_lambda = lambda y_true, y_pred: y_pred
     if learner.lower() == "adagrad":
         model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[1.0, 0, 0])
+                      loss_weights=[0.5, 0.25, 0.25])
     elif learner.lower() == "rmsprop":
         model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
                       loss_weights=[0.5, 0.25, 0.25])
     elif learner.lower() == "adam":
         model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[0.5, 0.25, 0.25])
+                      loss_weights=[1.0, 0, 0])
     else:
         model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
                       loss_weights=[0.5, 0.25, 0.25])
@@ -214,7 +214,7 @@ if __name__ == '__main__':
         label_array = np.array(labels)
         # Training
         hist = model.fit([user_input_array, item_input_array],  # input
-                         [label_array, np.zeros_like(label_array), np.zeros_like(label_array)],  # labels
+                         [label_array, np.zeros_like(label_array,dtype=float), np.zeros_like(label_array,dtype=float)],  # labels
                          batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
         t2 = time()
 
