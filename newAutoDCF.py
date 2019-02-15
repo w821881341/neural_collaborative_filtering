@@ -215,6 +215,7 @@ if __name__ == '__main__':
                          [label_array, np.zeros_like(label_array, dtype=float),
                           np.zeros_like(label_array, dtype=float)],  # labels
                          batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
+        print(hist.history)
         t2 = time()
 
         # Evaluation
