@@ -1,0 +1,14 @@
+[dnn]
+library_path=/usr/local/cuda/lib64
+
+[global]
+floatX = float32
+device = gpu
+force_device = True
+optimizer_including=cudnn
+
+[nvcc]
+fastmath = True
+
+[cuda]
+root=/usr/local/cuda
