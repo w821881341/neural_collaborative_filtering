@@ -80,19 +80,19 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
 
     K.print_tensor(user_data)
     user_encoder = Sequential(name='user_encoder')
-    user_encoder.add(Dense(layers[0] , input_shape=(num_items,), activation='relu'))
+    user_encoder.add(Dense(layers[0] , input_shape=(num_items,), activation='relu',name='user_encoder_layer_1'))
     # user_encoder.build((num_items,))
 
     user_decoder = Sequential(name='user_decoder')
-    user_decoder.add(Dense(num_items , input_shape=(layers[0],), activation='relu'))
+    user_decoder.add(Dense(num_items , input_shape=(layers[0],), activation='relu',name='user_decoder_layer_1'))
     # user_decoder.build((layers[0],))
 
     item_encoder = Sequential(name='item_encoder')
-    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu'))
+    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu',name='item_encoder_layer_1'))
     # item_encoder.build((num_users,))
 
     item_decoder = Sequential(name='item_decoder')
-    item_decoder.add(Dense(num_users , input_shape=(layers[0],), activation='relu'))
+    item_decoder.add(Dense(num_users , input_shape=(layers[0],), activation='relu',name='item_decoder_layer_1'))
     # item_decoder.build((layers[0],))
 
     user_encoder_MLP = user_encoder(user_data)
@@ -104,12 +104,13 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul',name="fusion")
 
     MLP_layers = Sequential(name="MLP_layers")
-
     for idx in range(1, num_layer):
         MLP_layers.add(Dense(layers[idx],input_shape=(layers[idx-1],),W_regularizer=l2(reg_layers[idx]), activation='relu', name='layer%d' % idx))
-    MLP_layers.add(Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],)))
-    MLP_layers.build((layers[0],))
-    predict_result = MLP_layers(vector)
+    vector = MLP_layers(vector)
+    # MLP_layers.build((layers[0],))
+
+    predict_layer = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],))
+    predict_result = predict_layer(vector)
 
 
     user_cost = Lambda(lambda x: K.sum(merge([K.square(user_data - user_decoder_MLP), user_data],mode='mul'), 1, keepdims=True)/K.sum(user_data,axis=-1), output_shape=(1,),name='user_reconstruct_cost')([user_data, user_decoder_MLP])
