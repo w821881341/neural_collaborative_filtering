@@ -77,6 +77,7 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
             weights=[train_matrix_t], input_length=1,
             name='embedding_item', trainable=False)(item_input))
 
+    K.print_tensor(user_data)
     user_encoder = Sequential()
     user_encoder.add(Dense(layers[0] , input_shape=(num_items,), activation='relu'))
     user_encoder.build((num_items,))
@@ -99,10 +100,8 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     item_decoder_MLP = item_decoder(user_encoder_MLP)
 
     # The 0-th layer is the dot product of embedding layers
-    # vector = K.dot(user_encoder_MLP, item_encoder_MLP)
     vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul')
-    # vector = T.dot(user_encoder_MLP,item_encoder_MLP)
-    # MLP layers
+
     MLP_layers = Sequential()
 
     for idx in range(1, num_layer):
@@ -110,14 +109,10 @@ def get_model(train_matrix,num_users, num_items, layers=[20, 10], reg_layers=[0,
     MLP_layers.add(Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction',input_shape=(layers[-1],)))
     MLP_layers.build((layers[0],))
     predict_result = MLP_layers(vector)
-    # user_cost = Lambda(lambda x: K.sum(merge([K.square(user_data - user_decoder_MLP), user_data],mode='mul'), 1, keepdims=True)#/K.sum(user_data,axis=-1)
-    # item_cost = K.sum(merge([K.square(item_data - item_decoder_MLP), item_data],mode='mul'), 1, keepdims=True)#/K.sum(item_data,axis=-1)
+
 
     user_cost = Lambda(lambda x: K.sum(merge([K.square(user_data - user_decoder_MLP), user_data],mode='mul'), 1, keepdims=True)/K.sum(user_data,axis=-1), output_shape=(1,),name='user_reconstruct_cost')([user_data, user_decoder_MLP])
     item_cost = Lambda(lambda x: K.sum(merge([K.square(user_data - user_decoder_MLP), user_data],mode='mul'), 1, keepdims=True)/K.sum(user_data,axis=-1), output_shape=(1,),name='item_reconstruct_cost')([item_data, item_decoder_MLP])
-    # cost_layer.build((2,))
-    # user_cost = cost_layer([user_input, user_decoder_MLP])
-    # item_cost = cost_layer([item_input, item_decoder_MLP])
 
     model = Model(input=[user_input, item_input],
                   output=[predict_result, user_cost, item_cost])
