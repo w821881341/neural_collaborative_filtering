@@ -110,13 +110,12 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
     # The 0-th layer is the dot product of embedding layers
     vector = merge([user_encoder_MLP, item_encoder_MLP], mode='mul', name="fusion")
 
-    if num_layer > 1:
-        MLP_layers = Sequential(name="MLP_layers")
-        for idx in range(1, num_layer):
-            MLP_layers.add(
-                Dense(layers[idx], input_shape=(layers[idx - 1],), W_regularizer=l2(reg_layers[idx]), activation='relu',
-                      name='layer%d' % idx))
-        vector = MLP_layers(vector)
+    MLP_layers = Sequential(name="MLP_layers")
+    for idx in range(1, num_layer):
+        MLP_layers.add(
+            Dense(layers[idx], input_shape=(layers[idx - 1],), W_regularizer=l2(reg_layers[idx]), activation='relu',
+                  name='layer%d' % idx))
+    vector = MLP_layers(vector)
 
     predict_layer = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction', input_shape=(layers[-1],))
     predict_result = predict_layer(vector)
