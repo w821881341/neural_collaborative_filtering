@@ -61,6 +61,8 @@ def parse_args():
                         help='Whether to save the trained model.')
     parser.add_argument('--ae_pretrain', nargs='?', default='',
                         help='Specify the pretrain model file for AE part. If empty, no pretrain will be used')
+    parser.add_argument('--pretrain', nargs='?', default='',
+                        help='Specify the pretrain model file. If empty, no pretrain will be used')
     return parser.parse_args()
 
 
@@ -87,16 +89,16 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
                                     name='item_rating_layer', trainable=False)(item_input))
 
     user_encoder = Sequential(name='user_encoder')
-    user_encoder.add(Dense(layers[0], input_shape=(num_items,), activation='relu', name='user_encoder_layer_1',W_regularizer=l2(reg_layers[0])))
+    user_encoder.add(Dense(layers[0], input_shape=(num_items,), activation='relu', name='user_encoder_layer_1', W_regularizer=l2(reg_layers[0])))
 
     user_decoder = Sequential(name='user_decoder')
-    user_decoder.add(Dense(num_items, input_shape=(layers[0],), activation='relu', name='user_decoder_layer_1',W_regularizer=l2(reg_layers[0])))
+    user_decoder.add(Dense(num_items, input_shape=(layers[0],), activation='relu', name='user_decoder_layer_1', W_regularizer=l2(reg_layers[0])))
 
     item_encoder = Sequential(name='item_encoder')
-    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu', name='item_encoder_layer_1',W_regularizer=l2(reg_layers[0])))
+    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu', name='item_encoder_layer_1', W_regularizer=l2(reg_layers[0])))
 
     item_decoder = Sequential(name='item_decoder')
-    item_decoder.add(Dense(num_users, input_shape=(layers[0],), activation='relu', name='item_decoder_layer_1',W_regularizer=l2(reg_layers[0])))
+    item_decoder.add(Dense(num_users, input_shape=(layers[0],), activation='relu', name='item_decoder_layer_1', W_regularizer=l2(reg_layers[0])))
 
     user_encoder_MLP = user_encoder(user_data)
     user_decoder_MLP = user_decoder(user_encoder_MLP)
@@ -177,6 +179,7 @@ if __name__ == '__main__':
     verbose = args.verbose
     cost_weight = args.cost_weight
     ae_pretrain = args.ae_pretrain
+    pretrain = args.pretrain
 
     topK = 10
     evaluation_threads = 1
@@ -193,7 +196,10 @@ if __name__ == '__main__':
           % (time() - t1, num_users, num_items, train.nnz, len(testRatings)))
 
     # Build model
+
     model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
+    if pretrain != "":
+        model.load_weights(pretrain)
     plot(model, to_file='AutoDCF.png', show_shapes=True)
 
     cost_lambda = lambda y_true, y_pred: y_pred
@@ -215,6 +221,7 @@ if __name__ == '__main__':
         ae_model.load_weights(ae_pretrain)
         model = load_pretrain_model(model, ae_model)
         print("Load pretrained AE (%s) models done. " %(ae_pretrain))
+
     # Check Init performance
     t1 = time()
     (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
