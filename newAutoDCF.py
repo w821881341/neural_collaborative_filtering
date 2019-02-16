@@ -78,10 +78,10 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
 
     user_data = Flatten()(Embedding(num_users, num_items,
                                     weights=[train_matrix], input_length=1,
-                                    name='embedding_user', trainable=False)(user_input))
+                                    name='user_rating_layer', trainable=False)(user_input))
     item_data = Flatten()(Embedding(num_items, num_users,
                                     weights=[train_matrix_t], input_length=1,
-                                    name='embedding_item', trainable=False)(item_input))
+                                    name='item_rating_layer', trainable=False)(item_input))
 
     user_encoder = Sequential(name='user_encoder')
     user_encoder.add(Dense(layers[0], input_shape=(num_items,), activation='relu', name='user_encoder_layer_1',W_regularizer=l2(reg_layers[0])))
@@ -109,7 +109,6 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
             Dense(layers[idx], input_shape=(layers[idx - 1],), W_regularizer=l2(reg_layers[idx]), activation='relu',
                   name='layer%d' % idx))
     vector = MLP_layers(vector)
-    # MLP_layers.build((layers[0],))
 
     predict_layer = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction', input_shape=(layers[-1],))
     predict_result = predict_layer(vector)
