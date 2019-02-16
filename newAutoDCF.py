@@ -29,6 +29,7 @@ import sys
 import argparse
 import multiprocessing as mp
 from keras.utils.visualize_util import plot
+import AE
 
 
 #################### Arguments ####################
@@ -210,7 +211,7 @@ if __name__ == '__main__':
                       loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
 
     if ae_pretrain != '':
-        ae_model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
+        ae_model = AE.get_model(train_matrix, num_users, num_items, layers, reg_layers)
         ae_model.load_weights(ae_pretrain)
         model = load_pretrain_model(model, ae_model)
         print("Load pretrained AE (%s) models done. " %(ae_pretrain))
