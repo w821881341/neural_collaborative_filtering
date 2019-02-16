@@ -250,7 +250,7 @@ if __name__ == '__main__':
         if epoch % verbose == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
             hr, ndcg, loss, prediction_loss, user_cost, item_cost = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0], hist.history['prediction_loss'][0], hist.history['user_reconstruct_cost_loss'][0], hist.history['item_reconstruct_cost_loss'][0]
-            print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f, prediction_loss = %.4f, user_cost = %.4f, item_cost = %.4f, [%.1f s]'
+            print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.8f, prediction_loss = %.4f, user_cost = %.8f, item_cost = %.8f, [%.1f s]'
                   % (epoch, t2 - t1, hr, ndcg, loss, prediction_loss, user_cost, item_cost, time() - t2))
             if hr > best_hr:
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
