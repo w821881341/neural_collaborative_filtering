@@ -63,6 +63,8 @@ def parse_args():
                         help='Specify the pretrain model file. If empty, no pretrain will be used')
     parser.add_argument('--loss_weight', nargs='?', default='[1.0,0.5,0.5]',
                         help="Regularization for each layer")
+    parser.add_argument('--is_pretrain', type=int, default=0,
+                        help='Show performance per X iterations')
     return parser.parse_args()
 
 
@@ -180,6 +182,7 @@ if __name__ == '__main__':
     loss_weight = eval(args.loss_weight)
     ae_pretrain = args.ae_pretrain
     pretrain = args.pretrain
+    is_pretrain = args.is_pretrain
 
     topK = 10
     evaluation_threads = 1
@@ -256,7 +259,8 @@ if __name__ == '__main__':
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
-
+            if is_pretrain:
+                model.save_weights(model_out_file, overwrite=True)
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " % (best_iter, best_hr, best_ndcg))
     if args.out > 0:
         print("The best AutoDCF model is saved to %s" % (model_out_file))
