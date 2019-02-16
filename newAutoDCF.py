@@ -51,8 +51,6 @@ def parse_args():
                         help='Number of negative instances to pair with a positive instance.')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate.')
-    parser.add_argument('--cost_weight', type=float, default=0.25,
-                        help='weight of cost in loss')
     parser.add_argument('--learner', nargs='?', default='adam',
                         help='Specify an optimizer: adagrad, adam, rmsprop, sgd')
     parser.add_argument('--verbose', type=int, default=1,
@@ -63,6 +61,8 @@ def parse_args():
                         help='Specify the pretrain model file for AE part. If empty, no pretrain will be used')
     parser.add_argument('--pretrain', nargs='?', default='',
                         help='Specify the pretrain model file. If empty, no pretrain will be used')
+    parser.add_argument('--loss_weight', nargs='?', default='[1.0,0.5,0.5]',
+                        help="Regularization for each layer")
     return parser.parse_args()
 
 
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     epochs = args.epochs
     verbose = args.verbose
-    cost_weight = args.cost_weight
+    loss_weight = eval(args.loss_weight)
     ae_pretrain = args.ae_pretrain
     pretrain = args.pretrain
 
@@ -205,16 +205,16 @@ if __name__ == '__main__':
     cost_lambda = lambda y_true, y_pred: y_pred
     if learner.lower() == "adagrad":
         model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
+                      loss_weights=loss_weight)
     elif learner.lower() == "rmsprop":
         model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
+                      loss_weights=loss_weight)
     elif learner.lower() == "adam":
         model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
+                      loss_weights=loss_weight)
     else:
         model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
-                      loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
+                      loss_weights=loss_weight)
 
     if ae_pretrain != '':
         ae_model = AE.get_model(train_matrix, num_users, num_items, layers, reg_layers)
