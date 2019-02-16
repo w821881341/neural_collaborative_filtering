@@ -247,7 +247,7 @@ if __name__ == '__main__':
         hist = model.fit([user_input_array, item_input_array],  # input
                          [label_array, np.zeros_like(label_array, dtype=float),
                           np.zeros_like(label_array, dtype=float)],  # labels
-                         batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
+                         batch_size=batch_size, nb_epoch=1, verbose=1, shuffle=True)
         t2 = time()
 
         # Evaluation
