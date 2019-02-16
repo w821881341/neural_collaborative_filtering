@@ -33,7 +33,7 @@ from keras.utils.visualize_util import plot
 
 #################### Arguments ####################
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run MLP.")
+    parser = argparse.ArgumentParser(description="Run AutoDCF.")
     parser.add_argument('--path', nargs='?', default='Data/',
                         help='Input data path.')
     parser.add_argument('--dataset', nargs='?', default='ml-1m',
@@ -179,8 +179,8 @@ if __name__ == '__main__':
 
     topK = 10
     evaluation_threads = 1
-    print("MLP arguments: %s " % (args))
-    model_out_file = 'Pretrain/%s_MLP_%s_%d.h5' % (args.dataset, args.layers, time())
+    print("AutoDCF arguments: %s " % (args))
+    model_out_file = 'Pretrain/%s_AutoDCF_%s_%d.h5' % (args.dataset, args.layers, time())
 
     # Loading data
     t1 = time()
@@ -251,4 +251,4 @@ if __name__ == '__main__':
 
     print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " % (best_iter, best_hr, best_ndcg))
     if args.out > 0:
-        print("The best MLP model is saved to %s" % (model_out_file))
+        print("The best AutoDCF model is saved to %s" % (model_out_file))
