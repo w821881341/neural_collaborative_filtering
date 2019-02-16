@@ -83,7 +83,6 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
                                     weights=[train_matrix_t], input_length=1,
                                     name='embedding_item', trainable=False)(item_input))
 
-    K.print_tensor(user_data)
     user_encoder = Sequential(name='user_encoder')
     user_encoder.add(Dense(layers[0], input_shape=(num_items,), activation='relu', name='user_encoder_layer_1'))
     # user_encoder.build((num_items,))
@@ -180,7 +179,7 @@ if __name__ == '__main__':
 
     # Build model
     model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
-    plot(model, to_file='AutoDCF.png')
+    plot(model, to_file='AutoDCF.png', show_shapes=True)
 
     cost_lambda = lambda y_true, y_pred: y_pred
     if learner.lower() == "adagrad":
