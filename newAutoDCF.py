@@ -58,6 +58,8 @@ def parse_args():
                         help='Show performance per X iterations')
     parser.add_argument('--out', type=int, default=1,
                         help='Whether to save the trained model.')
+    parser.add_argument('--ae_pretrain', nargs='?', default='',
+                        help='Specify the pretrain model file for AE part. If empty, no pretrain will be used')
     return parser.parse_args()
 
 
@@ -144,6 +146,22 @@ def get_train_instances(train, num_negatives):
     return user_input, item_input, labels
 
 
+def load_pretrain_model(model, auto_model):
+    # encoder
+    user_encoder = auto_model.get_layer('user_encoder').get_weights()
+    item_encoder = auto_model.get_layer('item_encoder').get_weights()
+    model.get_layer('user_encoder').set_weights(user_encoder)
+    model.get_layer('item_encoder').set_weights(item_encoder)
+
+    # decoder
+    user_decoder = auto_model.get_layer('user_decoder').get_weights()
+    item_decoder = auto_model.get_layer('item_decoder').get_weights()
+    model.get_layer('user_decoder').set_weights(user_decoder)
+    model.get_layer('item_decoder').set_weights(item_decoder)
+
+    return model
+
+
 if __name__ == '__main__':
     args = parse_args()
     path = args.path
@@ -157,6 +175,7 @@ if __name__ == '__main__':
     epochs = args.epochs
     verbose = args.verbose
     cost_weight = args.cost_weight
+    ae_pretrain = args.ae_pretrain
 
     topK = 10
     evaluation_threads = 1
@@ -190,7 +209,12 @@ if __name__ == '__main__':
         model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', cost_lambda, cost_lambda],
                       loss_weights=[1.0-2*cost_weight, cost_weight, cost_weight])
 
-        # Check Init performance
+    if ae_pretrain != '':
+        ae_model = get_model(train_matrix, num_users, num_items, layers, reg_layers)
+        ae_model.load_weights(ae_pretrain)
+        model = load_pretrain_model(model, ae_model)
+        print("Load pretrained AE (%s) models done. " %(ae_pretrain))
+    # Check Init performance
     t1 = time()
     (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
     hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
