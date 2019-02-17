@@ -118,7 +118,7 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
                       name='layer%d' % idx))
         vector = MLP_layers(vector)
 
-    predict_layer = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction', input_shape=(layers[-1],))
+    predict_layer = Dense(1, activation='sigmoid', name='prediction', input_shape=(layers[-1],))
     predict_result = predict_layer(vector)
 
     user_cost = Lambda(
