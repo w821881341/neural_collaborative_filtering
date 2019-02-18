@@ -181,7 +181,6 @@ if __name__ == '__main__':
         t2 = time()
 
         # Evaluation
-        print(hist.history)
         if epoch % verbose == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
             hr, ndcg, loss, prediction_loss, user_vib_loss, item_vib_loss = np.array(hits).mean(), np.array(
