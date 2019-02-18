@@ -64,15 +64,18 @@ def get_model(num_users, num_items, latent_dim, regs=[0,0]):
     MF_Embedding_Item = Embedding(input_dim = num_items, output_dim = latent_dim, name = 'item_embedding',
                                   init = init_normal, W_regularizer = l2(regs[1]), input_length=1)   
 
-    user_z_mean = Dense(latent_dim)(MF_Embedding_User)
-    user_z_log_var = Dense(latent_dim)(MF_Embedding_User)
-
-    item_z_mean = Dense(latent_dim)(MF_Embedding_Item)
-    item_z_log_var = Dense(latent_dim)(MF_Embedding_Item)
 
     # Crucial to flatten an embedding vector!
     user_latent = Flatten()(MF_Embedding_User(user_input))
     item_latent = Flatten()(MF_Embedding_Item(item_input))
+
+
+    user_z_mean = Dense(latent_dim)(user_latent)
+    user_z_log_var = Dense(latent_dim)(user_latent)
+    item_z_mean = Dense(latent_dim)(item_latent)
+    item_z_log_var = Dense(latent_dim)(item_latent)
+
+
     
     # Element-wise product of user and item embeddings 
     predict_vector = merge([user_latent, item_latent], mode = 'mul')
