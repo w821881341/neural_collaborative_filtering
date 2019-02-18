@@ -24,6 +24,7 @@ import sys
 import math
 import argparse
 
+
 #################### Arguments ####################
 def parse_args():
     parser = argparse.ArgumentParser(description="Run GMF.")
@@ -53,51 +54,51 @@ def parse_args():
                         help="Regularization for each layer")
     return parser.parse_args()
 
+
 def init_normal(shape, name=None):
     return initializations.normal(shape, scale=0.01, name=name)
 
-def get_model(num_users, num_items, latent_dim, regs=[0,0]):
+
+def get_model(num_users, num_items, latent_dim, regs=[0, 0]):
     # Input variables
-    user_input = Input(shape=(1,), dtype='int32', name = 'user_input')
-    item_input = Input(shape=(1,), dtype='int32', name = 'item_input')
+    user_input = Input(shape=(1,), dtype='int32', name='user_input')
+    item_input = Input(shape=(1,), dtype='int32', name='item_input')
 
-    MF_Embedding_User = Embedding(input_dim = num_users, output_dim = latent_dim, name = 'user_embedding',
-                                  init = init_normal, W_regularizer = l2(regs[0]), input_length=1)
-    MF_Embedding_Item = Embedding(input_dim = num_items, output_dim = latent_dim, name = 'item_embedding',
-                                  init = init_normal, W_regularizer = l2(regs[1]), input_length=1)   
-
+    MF_Embedding_User = Embedding(input_dim=num_users, output_dim=latent_dim, name='user_embedding',
+                                  init=init_normal, W_regularizer=l2(regs[0]), input_length=1)
+    MF_Embedding_Item = Embedding(input_dim=num_items, output_dim=latent_dim, name='item_embedding',
+                                  init=init_normal, W_regularizer=l2(regs[1]), input_length=1)
 
     # Crucial to flatten an embedding vector!
     user_latent = Flatten()(MF_Embedding_User(user_input))
     item_latent = Flatten()(MF_Embedding_Item(item_input))
-
 
     user_z_mean = Dense(latent_dim)(user_latent)
     user_z_log_var = Dense(latent_dim)(user_latent)
     item_z_mean = Dense(latent_dim)(item_latent)
     item_z_log_var = Dense(latent_dim)(item_latent)
 
+    # Element-wise product of user and item embeddings
+    predict_vector = merge([user_latent, item_latent], mode='mul')
 
-    
-    # Element-wise product of user and item embeddings 
-    predict_vector = merge([user_latent, item_latent], mode = 'mul')
-
-    user_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)),output_shape=(1,))([user_z_mean,user_z_log_var])
-    item_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)),output_shape=(1,))(
+    user_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)),
+                           output_shape=(1,), name='user_VIB')([user_z_mean, user_z_log_var])
+    item_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)),
+                           output_shape=(1,), name='item_VIB')(
         [item_z_mean, item_z_log_var])
 
-    
     # Final prediction layer
-    #prediction = Lambda(lambda x: K.sigmoid(K.sum(x)), output_shape=(1,))(predict_vector)
-    prediction = Dense(1, activation='sigmoid', init='lecun_uniform', name = 'prediction')(predict_vector)
-    
-    model = Model(input=[user_input, item_input], 
-                output=[prediction, user_VIB_loss, item_VIB_loss])
+    # prediction = Lambda(lambda x: K.sigmoid(K.sum(x)), output_shape=(1,))(predict_vector)
+    prediction = Dense(1, activation='sigmoid', init='lecun_uniform', name='prediction')(predict_vector)
+
+    model = Model(input=[user_input, item_input],
+                  output=[prediction, user_VIB_loss, item_VIB_loss])
 
     return model
 
+
 def get_train_instances(train, num_negatives):
-    user_input, item_input, labels = [],[],[]
+    user_input, item_input, labels = [], [], []
     num_users = train.shape[0]
     for (u, i) in train.keys():
         # positive instance
@@ -114,6 +115,7 @@ def get_train_instances(train, num_negatives):
             labels.append(0)
     return user_input, item_input, labels
 
+
 if __name__ == '__main__':
     args = parse_args()
     num_factors = args.num_factors
@@ -125,41 +127,45 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     verbose = args.verbose
     loss_weight = eval(args.loss_weight)
-    
+
     topK = 10
-    evaluation_threads = 1 #mp.cpu_count()
-    print("GMF arguments: %s" %(args))
-    model_out_file = 'Pretrain/%s_GMF_%d_%d.h5' %(args.dataset, num_factors, time())
-    
+    evaluation_threads = 1  # mp.cpu_count()
+    print("GMF arguments: %s" % (args))
+    model_out_file = 'Pretrain/%s_GMF_%d_%d.h5' % (args.dataset, num_factors, time())
+
     # Loading data
     t1 = time()
     dataset = Dataset(args.path + args.dataset)
     train, testRatings, testNegatives = dataset.trainMatrix, dataset.testRatings, dataset.testNegatives
     num_users, num_items = train.shape
-    print("Load data done [%.1f s]. #user=%d, #item=%d, #train=%d, #test=%d" 
-          %(time()-t1, num_users, num_items, train.nnz, len(testRatings)))
+    print("Load data done [%.1f s]. #user=%d, #item=%d, #train=%d, #test=%d"
+          % (time() - t1, num_users, num_items, train.nnz, len(testRatings)))
 
     loss_lambda = lambda y_true, y_pred: y_pred
     # Build model
     model = get_model(num_users, num_items, num_factors, regs)
-    if learner.lower() == "adagrad": 
-        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=loss_weight)
+    if learner.lower() == "adagrad":
+        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda],
+                      loss_weights=loss_weight)
     elif learner.lower() == "rmsprop":
-        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=loss_weight)
+        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda],
+                      loss_weights=loss_weight)
     elif learner.lower() == "adam":
-        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=loss_weight)
+        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda],
+                      loss_weights=loss_weight)
     else:
-        model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=loss_weight)
-    #print(model.summary())
-    
+        model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda],
+                      loss_weights=loss_weight)
+    # print(model.summary())
+
     # Init performance
     t1 = time()
     (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
     hr, ndcg = np.array(hits).mean(), np.array(ndcgs).mean()
-    #mf_embedding_norm = np.linalg.norm(model.get_layer('user_embedding').get_weights())+np.linalg.norm(model.get_layer('item_embedding').get_weights())
-    #p_norm = np.linalg.norm(model.get_layer('prediction').get_weights()[0])
-    print('Init: HR = %.4f, NDCG = %.4f\t [%.1f s]' % (hr, ndcg, time()-t1))
-    
+    # mf_embedding_norm = np.linalg.norm(model.get_layer('user_embedding').get_weights())+np.linalg.norm(model.get_layer('item_embedding').get_weights())
+    # p_norm = np.linalg.norm(model.get_layer('prediction').get_weights()[0])
+    print('Init: HR = %.4f, NDCG = %.4f\t [%.1f s]' % (hr, ndcg, time() - t1))
+
     # Train model
     best_hr, best_ndcg, best_iter = hr, ndcg, -1
     for epoch in range(epochs):
@@ -168,23 +174,28 @@ if __name__ == '__main__':
         user_input, item_input, labels = get_train_instances(train, num_negatives)
         label_array = np.array(labels)
         # Training
-        hist = model.fit([np.array(user_input), np.array(item_input)], #input
-                         [label_array, np.zeros_like(label_array,dtype=float), np.zeros_like(label_array,dtype=float)], # labels
+        hist = model.fit([np.array(user_input), np.array(item_input)],  # input
+                         [label_array, np.zeros_like(label_array, dtype=float),
+                          np.zeros_like(label_array, dtype=float)],  # labels
                          batch_size=batch_size, nb_epoch=1, verbose=1, shuffle=True)
         t2 = time()
-        
+
         # Evaluation
         print(hist.history)
-        if epoch %verbose == 0:
+        if epoch % verbose == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
-            hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
-            print('Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f [%.1f s]' 
-                  % (epoch,  t2-t1, hr, ndcg, loss, time()-t2))
+            hr, ndcg, loss, prediction_loss, user_vib_loss, item_vib_loss = np.array(hits).mean(), np.array(
+                ndcgs).mean(), hist.history['loss'][0], hist.history['prediction_loss'][0], \
+                                                                            hist.history['user_VIB_loss'][0], \
+                                                                            hist.history['item_VIB_loss'][0]
+            print(
+                'Iteration %d [%.1f s]: HR = %.4f, NDCG = %.4f, loss = %.4f, prediction_loss = %.4f, user_vib_loss = %.4f, item_vib_loss = %.4f, [%.1f s]'
+                % (epoch, t2 - t1, hr, ndcg, loss, prediction_loss, user_vib_loss, item_vib_loss, time() - t2))
             if hr > best_hr:
                 best_hr, best_ndcg, best_iter = hr, ndcg, epoch
                 if args.out > 0:
                     model.save_weights(model_out_file, overwrite=True)
 
-    print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " %(best_iter, best_hr, best_ndcg))
+    print("End. Best Iteration %d:  HR = %.4f, NDCG = %.4f. " % (best_iter, best_hr, best_ndcg))
     if args.out > 0:
-        print("The best GMF model is saved to %s" %(model_out_file))
+        print("The best GMF model is saved to %s" % (model_out_file))
