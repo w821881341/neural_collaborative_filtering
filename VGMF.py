@@ -49,6 +49,8 @@ def parse_args():
                         help='Show performance per X iterations')
     parser.add_argument('--out', type=int, default=1,
                         help='Whether to save the trained model.')
+    parser.add_argument('--loss_weight', nargs='?', default='[1.0,0.5,0.5]',
+                        help="Regularization for each layer")
     return parser.parse_args()
 
 def init_normal(shape, name=None):
@@ -122,6 +124,7 @@ if __name__ == '__main__':
     epochs = args.epochs
     batch_size = args.batch_size
     verbose = args.verbose
+    loss_weight = eval(args.loss_weight)
     
     topK = 10
     evaluation_threads = 1 #mp.cpu_count()
@@ -140,13 +143,13 @@ if __name__ == '__main__':
     # Build model
     model = get_model(num_users, num_items, num_factors, regs)
     if learner.lower() == "adagrad": 
-        model.compile(optimizer=Adagrad(lr=learning_rate), loss='binary_crossentropy')
+        model.compile(optimizer=Adagrad(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=loss_weight)
     elif learner.lower() == "rmsprop":
-        model.compile(optimizer=RMSprop(lr=learning_rate), loss='binary_crossentropy')
+        model.compile(optimizer=RMSprop(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=loss_weight)
     elif learner.lower() == "adam":
-        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=[1.0, 0.5, 0.5])
+        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=loss_weight)
     else:
-        model.compile(optimizer=SGD(lr=learning_rate), loss='binary_crossentropy')
+        model.compile(optimizer=SGD(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=loss_weight)
     #print(model.summary())
     
     # Init performance
@@ -167,10 +170,11 @@ if __name__ == '__main__':
         # Training
         hist = model.fit([np.array(user_input), np.array(item_input)], #input
                          [label_array, np.zeros_like(label_array,dtype=float), np.zeros_like(label_array,dtype=float)], # labels
-                         batch_size=batch_size, nb_epoch=1, verbose=0, shuffle=True)
+                         batch_size=batch_size, nb_epoch=1, verbose=1, shuffle=True)
         t2 = time()
         
         # Evaluation
+        print(hist.history)
         if epoch %verbose == 0:
             (hits, ndcgs) = evaluate_model(model, testRatings, testNegatives, topK, evaluation_threads)
             hr, ndcg, loss = np.array(hits).mean(), np.array(ndcgs).mean(), hist.history['loss'][0]
