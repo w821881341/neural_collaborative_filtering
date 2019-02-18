@@ -79,13 +79,18 @@ def get_model(num_users, num_items, latent_dim, regs=[0,0]):
     
     # Element-wise product of user and item embeddings 
     predict_vector = merge([user_latent, item_latent], mode = 'mul')
+
+    user_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)))([user_z_mean,user_z_log_var])
+    item_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)))(
+        [item_z_mean, item_z_log_var])
+
     
     # Final prediction layer
     #prediction = Lambda(lambda x: K.sigmoid(K.sum(x)), output_shape=(1,))(predict_vector)
     prediction = Dense(1, activation='sigmoid', init='lecun_uniform', name = 'prediction')(predict_vector)
     
     model = Model(input=[user_input, item_input], 
-                output=[prediction, [user_z_mean,user_z_log_var], [item_z_mean,item_z_log_var]])
+                output=[prediction, user_VIB_loss, item_VIB_loss])
 
     return model
 
@@ -131,8 +136,7 @@ if __name__ == '__main__':
     print("Load data done [%.1f s]. #user=%d, #item=%d, #train=%d, #test=%d" 
           %(time()-t1, num_users, num_items, train.nnz, len(testRatings)))
 
-    VIB_lambda = lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0))
-
+    loss_lambda = lambda y_true, y_pred: y_pred
     # Build model
     model = get_model(num_users, num_items, num_factors, regs)
     if learner.lower() == "adagrad": 
@@ -140,7 +144,7 @@ if __name__ == '__main__':
     elif learner.lower() == "rmsprop":
         model.compile(optimizer=RMSprop(lr=learning_rate), loss='binary_crossentropy')
     elif learner.lower() == "adam":
-        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', VIB_lambda, VIB_lambda], loss_weights=[1.0, 0.5, 0.5])
+        model.compile(optimizer=Adam(lr=learning_rate), loss=['binary_crossentropy', loss_lambda, loss_lambda], loss_weights=[1.0, 0.5, 0.5])
     else:
         model.compile(optimizer=SGD(lr=learning_rate), loss='binary_crossentropy')
     #print(model.summary())
