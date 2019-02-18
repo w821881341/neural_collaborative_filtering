@@ -11,7 +11,7 @@ import math
 import heapq # for retrieval topK
 import multiprocessing
 import numpy as np
-import tqdm
+from tqdm import tqdm
 from time import time
 #from numba import jit, autojit
 
