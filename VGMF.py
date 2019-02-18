@@ -80,8 +80,8 @@ def get_model(num_users, num_items, latent_dim, regs=[0,0]):
     # Element-wise product of user and item embeddings 
     predict_vector = merge([user_latent, item_latent], mode = 'mul')
 
-    user_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)))([user_z_mean,user_z_log_var])
-    item_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)))(
+    user_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)),output_shape=(1,))([user_z_mean,user_z_log_var])
+    item_VIB_loss = Lambda(lambda x: - 0.5 * K.sum(K.mean(1 + x[1] - K.square(x[0]) - K.exp(x[1]), 0)),output_shape=(1,))(
         [item_z_mean, item_z_log_var])
 
     
