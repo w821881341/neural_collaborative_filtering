@@ -17,7 +17,7 @@ from keras.layers import Embedding, Input, Dense, merge, Reshape, Merge, Flatten
 from keras.optimizers import Adagrad, Adam, SGD, RMSprop
 from keras.regularizers import l2
 from Dataset import Dataset
-from evaluate import evaluate_model
+from VIB_evaluate import evaluate_model
 from time import time
 import multiprocessing as mp
 import sys
