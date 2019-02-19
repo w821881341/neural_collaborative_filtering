@@ -91,13 +91,13 @@ def get_model(train_matrix, num_users, num_items, layers=[20, 10], reg_layers=[0
                                     name='item_rating_layer', trainable=False)(item_input))
 
     user_encoder = Sequential(name='user_encoder')
-    user_encoder.add(Dense(layers[0], input_shape=(num_items,), activation='relu', name='user_encoder_layer_1', W_regularizer=l2(reg_layers[0])))
+    user_encoder.add(Dense(layers[0], input_shape=(num_items,), activation='sigmoid', name='user_encoder_layer_1', W_regularizer=l2(reg_layers[0])))
 
     user_decoder = Sequential(name='user_decoder')
     user_decoder.add(Dense(num_items, input_shape=(layers[0],), activation='sigmoid', name='user_decoder_layer_1', W_regularizer=l2(reg_layers[0])))
 
     item_encoder = Sequential(name='item_encoder')
-    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='relu', name='item_encoder_layer_1', W_regularizer=l2(reg_layers[0])))
+    item_encoder.add(Dense(layers[0], input_shape=(num_users,), activation='sigmoid', name='item_encoder_layer_1', W_regularizer=l2(reg_layers[0])))
 
     item_decoder = Sequential(name='item_decoder')
     item_decoder.add(Dense(num_users, input_shape=(layers[0],), activation='sigmoid', name='item_decoder_layer_1', W_regularizer=l2(reg_layers[0])))
